@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Create child OUs under an existing Workloads OU.
+  This stack will create the following environment OUs as children of the provided Workloads OU:
+    - prd, ppe, tst, dev
+  And for each environment OU the following sub-OUs:
+    - TU, INT, CUST, SEC, COLL, COMM, FIN
+  IMPORTANT: This template only creates Organizational Units. It does NOT create AWS Accounts,
+  Policies, or modify the Organization Root. Provide the Workloads OU Id (example: ou-xxxx-xxxxxxxx)
+  that already exists in your AWS Organization.
+
+Metadata:
+  ProvidedRootDetails: |
+    Root ID: r-in2r
+    Root ARN: arn:aws:organizations::481665121350:root/o-lunm9woz3u/r-in2r
+    Enabled policy types: Backup policies, Service control policies
+  ExistingOUsProvidedByUser: |
+    Infrastructure
+      ID: ou-in2r-ps7c91hp
+      ARN: arn:aws:organizations::481665121350:ou/o-lunm9woz3u/ou-in2r-ps7c91hp
+    ITCapabilityFunction
+      ID: ou-in2r-47row3mq
+      ARN: arn:aws:organizations::481665121350:ou/o-lunm9woz3u/ou-in2r-47row3mq
+    PolicyStaging
+      ID: ou-in2r-nythdvcl
+      ARN: arn:aws:organizations::481665121350:ou/o-lunm9woz3u/ou-in2r-nythdvcl
+    Security
+      ID: ou-in2r-aci20s71
+      ARN: arn:aws:organizations::481665121350:ou/o-lunm9woz3u/ou-in2r-aci20s71
+    Transitional
+      ID: ou-in2r-qf521oy6
+      ARN: arn:aws:organizations::481665121350:ou/o-lunm9woz3u/ou-in2r-qf521oy6
+    dfstimsandbox (account)
+      ID: 481665121350
+      ARN: arn:aws:organizations::481665121350:account/o-lunm9woz3u/481665121350
+
+Parameters:
+  RootId:
+    Type: String
+    Default: r-in2r
+    Description: >
+      (Informational) Organization Root Id provided by user. Example: r-in2r.
+      NOTE: This parameter is informational only for documentation in the template.
+  WorkloadsOUId:
+    Type: String
+    Description: >
+      The Organizational Unit Id of the existing Workloads OU where child OUs will be created.
+      Example format: ou-xxxxxxxx-xxxxxxxx
+      How to get it: AWS Console -> Organizations -> select "Workloads" OU -> copy the OU Id.
+      Provide this value when launching the stack.
+
+Resources:
+  # Environment OUs under workloads
+  PrdOU:
+    Type: AWS::Organizations::OrganizationalUnit
+    Properties:
+      ParentId: !Ref WorkloadsOUId
+      Name: prd
+
+  PpeOU:
+    Type: AWS::Organizations::OrganizationalUnit
+    Properties:
+      ParentId: !Ref WorkloadsOUId
+      Name: ppe
+
+  TstOU:
+    Type: AWS::Organizations::OrganizationalUnit
+    Properties:
+      ParentId: !Ref WorkloadsOUId
+      Name: tst
+
+  DevOU:
+    Type: AWS::Organizations::OrganizationalUnit
+    Properties:
+      ParentId: !Ref WorkloadsOUId
+      Name: dev
+
+  # Sub-OUs for prd
+  PrdTU:    { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PrdOU.Id, Name: TU   } }
+  PrdINT:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PrdOU.Id, Name: INT  } }
+  PrdCUST:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PrdOU.Id, Name: CUST } }
+  PrdSEC:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PrdOU.Id, Name: SEC  } }
+  PrdCOLL:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PrdOU.Id, Name: COLL } }
+  PrdCOMM:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PrdOU.Id, Name: COMM } }
+  PrdFIN:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PrdOU.Id, Name: FIN  } }
+
+  # Sub-OUs for ppe
+  PpeTU:    { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PpeOU.Id, Name: TU   } }
+  PpeINT:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PpeOU.Id, Name: INT  } }
+  PpeCUST:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PpeOU.Id, Name: CUST } }
+  PpeSEC:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PpeOU.Id, Name: SEC  } }
+  PpeCOLL:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PpeOU.Id, Name: COLL } }
+  PpeCOMM:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PpeOU.Id, Name: COMM } }
+  PpeFIN:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt PpeOU.Id, Name: FIN  } }
+
+  # Sub-OUs for tst
+  TstTU:    { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt TstOU.Id, Name: TU   } }
+  TstINT:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt TstOU.Id, Name: INT  } }
+  TstCUST:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt TstOU.Id, Name: CUST } }
+  TstSEC:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt TstOU.Id, Name: SEC  } }
+  TstCOLL:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt TstOU.Id, Name: COLL } }
+  TstCOMM:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt TstOU.Id, Name: COMM } }
+  TstFIN:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt TstOU.Id, Name: FIN  } }
+
+  # Sub-OUs for dev
+  DevTU:    { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt DevOU.Id, Name: TU   } }
+  DevINT:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt DevOU.Id, Name: INT  } }
+  DevCUST:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt DevOU.Id, Name: CUST } }
+  DevSEC:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt DevOU.Id, Name: SEC  } }
+  DevCOLL:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt DevOU.Id, Name: COLL } }
+  DevCOMM:  { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt DevOU.Id, Name: COMM } }
+  DevFIN:   { Type: AWS::Organizations::OrganizationalUnit, Properties: { ParentId: !GetAtt DevOU.Id, Name: FIN  } }
+
+Outputs:
+  PrdOUId:
+    Description: ID of the 'prd' OU
+    Value: !GetAtt PrdOU.Id
+
+  PpeOUId:
+    Description: ID of the 'ppe' OU
+    Value: !GetAtt PpeOU.Id
+
+  TstOUId:
+    Description: ID of the 'tst' OU
+    Value: !GetAtt TstOU.Id
+
+  DevOUId:
+    Description: ID of the 'dev' OU
+    Value: !GetAtt DevOU.Id
+
+  

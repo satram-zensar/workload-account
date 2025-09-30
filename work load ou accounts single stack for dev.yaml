@@ -1,0 +1,1483 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  CloudFormation template (DEV) — creates 7 account VPCs/subnets/IGW/route tables/associations/baseline SGs
+  and Read/Write IAM roles for each account .
+
+Parameters:
+  # TRUSTED account lists for each account's roles (pass ARNs as comma-separated list)
+  TUDevReadRoleName:
+    Type: String
+    Default: TU-dev-read-role
+    Description: Name of the TU dev read role
+  TUDevWriteRoleName:
+    Type: String
+    Default: TU-dev-write-role
+    Description: Name of the TU dev write role
+  TUDevReadRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+    Description: Trusted ARNs allowed to assume TU dev read role
+  TUDevWriteRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+    Description: Trusted ARNs allowed to assume TU dev write role
+
+  INTDevReadRoleName:
+    Type: String
+    Default: INT-dev-read-role
+  INTDevWriteRoleName:
+    Type: String
+    Default: INT-dev-write-role
+  INTDevReadRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+  INTDevWriteRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+
+  CUSTDevReadRoleName:
+    Type: String
+    Default: CUST-dev-read-role
+  CUSTDevWriteRoleName:
+    Type: String
+    Default: CUST-dev-write-role
+  CUSTDevReadRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+  CUSTDevWriteRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+
+  SECDevReadRoleName:
+    Type: String
+    Default: SEC-dev-read-role
+  SECDevWriteRoleName:
+    Type: String
+    Default: SEC-dev-write-role
+  SECDevReadRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+  SECDevWriteRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+
+  COLLDevReadRoleName:
+    Type: String
+    Default: COLL-dev-read-role
+  COLLDevWriteRoleName:
+    Type: String
+    Default: COLL-dev-write-role
+  COLLDevReadRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+  COLLDevWriteRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+
+  COMMDevReadRoleName:
+    Type: String
+    Default: COMM-dev-read-role
+  COMMDevWriteRoleName:
+    Type: String
+    Default: COMM-dev-write-role
+  COMMDevReadRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+  COMMDevWriteRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+
+  FINDevReadRoleName:
+    Type: String
+    Default: FIN-dev-read-role
+  FINDevWriteRoleName:
+    Type: String
+    Default: FIN-dev-write-role
+  FINDevReadRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+  FINDevWriteRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::111111111111:root"
+
+Resources:
+
+  # -------------------------
+  # TU DEV VPC + subnets + IGW + RTB + associations + route
+  # -------------------------
+  VpcTUDevEuw1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.128.0/20
+      Tags:
+        - Key: Name
+          Value: vpc-TU-dev-euw1-01
+
+  TUDevInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: tu-dev-internet-gateway
+
+  TUDevIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      InternetGatewayId: !Ref TUDevInternetGateway
+
+  # TU dev subnets (appdata A/B/C, officepresentation A/B/C, internetpresentation A/B/C)
+  TUDevSnAppdataA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.128.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1a }]
+
+  TUDevSnAppdataB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.129.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1b }]
+
+  TUDevSnAppdataC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.130.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1c }]
+
+  TUDevSnOfficeA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.131.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1a }]
+
+  TUDevSnOfficeB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.132.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1b }]
+
+  TUDevSnOfficeC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.133.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1c }]
+
+  TUDevSnInternetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.134.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1a }]
+
+  TUDevSnInternetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.135.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1b }]
+
+  TUDevSnInternetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      CidrBlock: 10.3.136.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1c }]
+
+  TUDevRtbCommon:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcTUDevEuw1
+      Tags:
+        - Key: Name
+          Value: rtb-tu-dev-common-euw1
+
+  # Associations for TU
+  TUDevRtbAssocAppdataA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnAppdataA
+
+  TUDevRtbAssocAppdataB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnAppdataB
+
+  TUDevRtbAssocAppdataC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnAppdataC
+
+  TUDevRtbAssocOfficeA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnOfficeA
+
+  TUDevRtbAssocOfficeB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnOfficeB
+
+  TUDevRtbAssocOfficeC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnOfficeC
+
+  TUDevRtbAssocInternetA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnInternetA
+
+  TUDevRtbAssocInternetB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnInternetB
+
+  TUDevRtbAssocInternetC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      SubnetId: !Ref TUDevSnInternetC
+
+  # Route as per  pattern for DEV TU
+  TUDevRtbRouteTo10316020:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref TUDevRtbCommon
+      DestinationCidrBlock: 10.3.16.0/20
+      GatewayId: !Ref TUDevInternetGateway
+
+  # Baseline SGs for TU (names only)
+  TUDevSgAzureArc:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Azure Arc outbound
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-azure-arc }]
+
+  TUDevSgAzureMonitor:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Azure Monitor outbound
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-azure-monitor }]
+
+  TUDevSgMicrosoftDefender:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Microsoft Defender outbound
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-microsoft-defender }]
+
+  TUDevSgDatadog:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Data Dog outbound
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-datadog }]
+
+  TUDevSgQualys:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Qualys SaaS service
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-qualys }]
+
+  TUDevSgSentinelSyslog:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Sentinel syslog
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-sentinel-syslog }]
+
+  TUDevSgProdDomainControllers:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Prod Domain Controllers (bidirectional)
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-prod-domain-controllers }]
+
+  TUDevSgProdCertAuthority:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Prod Cert Authority (bidirectional)
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-prod-cert-authority }]
+
+  TUDevSgHttps:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: HTTPS inbound/outbound
+      VpcId: !Ref VpcTUDevEuw1
+      Tags: [{ Key: Name, Value: sg-https }]
+
+  # TU DEV IAM Roles (read + write)
+  TUDevReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref TUDevReadRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TUDevReadRoleTrustedAccounts
+            Action:
+              - sts:AssumeRole
+
+  TUDevWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref TUDevWriteRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TUDevWriteRoleTrustedAccounts
+            Action:
+              - sts:AssumeRole
+
+  # -------------------------
+  # INT DEV (replicate same pattern with DEV CIDRs)
+  # -------------------------
+  VpcINTDevEuw1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.144.0/20
+      Tags:
+        - Key: Name
+          Value: vpc-INT-dev-euw1-01
+
+  INTDevInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: int-dev-internet-gateway }]
+
+  INTDevIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      InternetGatewayId: !Ref INTDevInternetGateway
+
+  INTDevSnAppdataA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.144.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1a }]
+
+  INTDevSnAppdataB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.145.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1b }]
+
+  INTDevSnAppdataC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.146.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1c }]
+
+  INTDevSnOfficeA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.147.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1a }]
+
+  INTDevSnOfficeB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.148.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1b }]
+
+  INTDevSnOfficeC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.149.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1c }]
+
+  INTDevSnInternetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.150.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1a }]
+
+  INTDevSnInternetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.151.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1b }]
+
+  INTDevSnInternetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      CidrBlock: 10.3.152.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1c }]
+
+  INTDevRtbCommon:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcINTDevEuw1
+      Tags: [{ Key: Name, Value: rtb-int-dev-common-euw1 }]
+
+  INTDevRtbAssocAppdataA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnAppdataA
+
+  INTDevRtbAssocAppdataB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnAppdataB
+
+  INTDevRtbAssocAppdataC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnAppdataC
+
+  INTDevRtbAssocOfficeA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnOfficeA
+
+  INTDevRtbAssocOfficeB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnOfficeB
+
+  INTDevRtbAssocOfficeC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnOfficeC
+
+  INTDevRtbAssocInternetA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnInternetA
+
+  INTDevRtbAssocInternetB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnInternetB
+
+  INTDevRtbAssocInternetC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      SubnetId: !Ref INTDevSnInternetC
+
+  INTDevRtbRouteTo10332020:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref INTDevRtbCommon
+      DestinationCidrBlock: 10.3.32.0/20
+      GatewayId: !Ref INTDevInternetGateway
+
+  # INT baseline SGs
+  INTDevSgAzureArc:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Azure Arc outbound
+      VpcId: !Ref VpcINTDevEuw1
+      Tags: [{ Key: Name, Value: sg-azure-arc }]
+
+  # INT IAM Roles
+  INTDevReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref INTDevReadRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref INTDevReadRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  INTDevWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref INTDevWriteRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref INTDevWriteRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  # -------------------------
+  # CUST DEV
+  # -------------------------
+  VpcCUSTDevEuw1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.160.0/20
+      Tags: [{ Key: Name, Value: vpc-CUST-dev-euw1-01 }]
+
+  CUSTDevInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: cust-dev-internet-gateway }]
+
+  CUSTDevIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      InternetGatewayId: !Ref CUSTDevInternetGateway
+
+  CUSTDevSnAppdataA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.160.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1a }]
+
+  CUSTDevSnAppdataB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.161.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1b }]
+
+  CUSTDevSnAppdataC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.162.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1c }]
+
+  CUSTDevSnOfficeA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.163.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1a }]
+
+  CUSTDevSnOfficeB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.164.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1b }]
+
+  CUSTDevSnOfficeC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.165.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1c }]
+
+  CUSTDevSnInternetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.166.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1a }]
+
+  CUSTDevSnInternetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.167.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1b }]
+
+  CUSTDevSnInternetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      CidrBlock: 10.3.168.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1c }]
+
+  CUSTDevRtbCommon:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcCUSTDevEuw1
+      Tags: [{ Key: Name, Value: rtb-cust-dev-common-euw1 }]
+
+  CUSTDevRtbAssocAppdataA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnAppdataA
+
+  CUSTDevRtbAssocAppdataB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnAppdataB
+
+  CUSTDevRtbAssocAppdataC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnAppdataC
+
+  CUSTDevRtbAssocOfficeA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnOfficeA
+
+  CUSTDevRtbAssocOfficeB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnOfficeB
+
+  CUSTDevRtbAssocOfficeC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnOfficeC
+
+  CUSTDevRtbAssocInternetA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnInternetA
+
+  CUSTDevRtbAssocInternetB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnInternetB
+
+  CUSTDevRtbAssocInternetC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      SubnetId: !Ref CUSTDevSnInternetC
+
+  CUSTDevRtbRouteTo10348020:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref CUSTDevRtbCommon
+      DestinationCidrBlock: 10.3.48.0/20
+      GatewayId: !Ref CUSTDevInternetGateway
+
+  # CUST IAM Roles
+  CUSTDevReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref CUSTDevReadRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref CUSTDevReadRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  CUSTDevWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref CUSTDevWriteRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref CUSTDevWriteRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  # -------------------------
+  # SEC DEV
+  # -------------------------
+  VpcSECDevEuw1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.176.0/20
+      Tags: [{ Key: Name, Value: vpc-SEC-dev-euw1-01 }]
+
+  SECDevInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: sec-dev-internet-gateway }]
+
+  SECDevIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      InternetGatewayId: !Ref SECDevInternetGateway
+
+  SECDevSnAppdataA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.176.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1a }]
+
+  SECDevSnAppdataB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.177.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1b }]
+
+  SECDevSnAppdataC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.178.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1c }]
+
+  SECDevSnOfficeA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.179.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1a }]
+
+  SECDevSnOfficeB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.180.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1b }]
+
+  SECDevSnOfficeC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.181.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1c }]
+
+  SECDevSnInternetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.182.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1a }]
+
+  SECDevSnInternetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.183.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1b }]
+
+  SECDevSnInternetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      CidrBlock: 10.3.184.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1c }]
+
+  SECDevRtbCommon:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcSECDevEuw1
+      Tags: [{ Key: Name, Value: rtb-sec-dev-common-euw1 }]
+
+  SECDevRtbAssocAppdataA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnAppdataA
+
+  SECDevRtbAssocAppdataB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnAppdataB
+
+  SECDevRtbAssocAppdataC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnAppdataC
+
+  SECDevRtbAssocOfficeA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnOfficeA
+
+  SECDevRtbAssocOfficeB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnOfficeB
+
+  SECDevRtbAssocOfficeC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnOfficeC
+
+  SECDevRtbAssocInternetA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnInternetA
+
+  SECDevRtbAssocInternetB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnInternetB
+
+  SECDevRtbAssocInternetC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      SubnetId: !Ref SECDevSnInternetC
+
+  SECDevRtbRouteTo10364020:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref SECDevRtbCommon
+      DestinationCidrBlock: 10.3.64.0/20
+      GatewayId: !Ref SECDevInternetGateway
+
+  SECDevReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref SECDevReadRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref SECDevReadRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  SECDevWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref SECDevWriteRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref SECDevWriteRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  # -------------------------
+  # COLL DEV
+  # -------------------------
+  VpcCOLLDevEuw1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.192.0/20
+      Tags: [{ Key: Name, Value: vpc-COLL-dev-euw1-01 }]
+
+  COLLDevInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: coll-dev-internet-gateway }]
+
+  COLLDevIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      InternetGatewayId: !Ref COLLDevInternetGateway
+
+  COLLDevSnAppdataA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.192.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1a }]
+
+  COLLDevSnAppdataB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.193.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1b }]
+
+  COLLDevSnAppdataC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.194.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1c }]
+
+  COLLDevSnOfficeA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.195.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1a }]
+
+  COLLDevSnOfficeB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.196.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1b }]
+
+  COLLDevSnOfficeC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.197.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1c }]
+
+  COLLDevSnInternetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.198.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1a }]
+
+  COLLDevSnInternetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.199.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1b }]
+
+  COLLDevSnInternetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      CidrBlock: 10.3.200.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1c }]
+
+  COLLDevRtbCommon:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcCOLLDevEuw1
+      Tags: [{ Key: Name, Value: rtb-coll-dev-common-euw1 }]
+
+  COLLDevRtbAssocAppdataA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnAppdataA
+
+  COLLDevRtbAssocAppdataB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnAppdataB
+
+  COLLDevRtbAssocAppdataC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnAppdataC
+
+  COLLDevRtbAssocOfficeA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnOfficeA
+
+  COLLDevRtbAssocOfficeB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnOfficeB
+
+  COLLDevRtbAssocOfficeC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnOfficeC
+
+  COLLDevRtbAssocInternetA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnInternetA
+
+  COLLDevRtbAssocInternetB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnInternetB
+
+  COLLDevRtbAssocInternetC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      SubnetId: !Ref COLLDevSnInternetC
+
+  COLLDevRtbRouteTo10380020:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref COLLDevRtbCommon
+      DestinationCidrBlock: 10.3.80.0/20
+      GatewayId: !Ref COLLDevInternetGateway
+
+  COLLDevReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref COLLDevReadRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref COLLDevReadRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  COLLDevWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref COLLDevWriteRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref COLLDevWriteRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  # -------------------------
+  # COMM DEV
+  # -------------------------
+  VpcCOMMDevEuw1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.208.0/20
+      Tags: [{ Key: Name, Value: vpc-COMM-dev-euw1-01 }]
+
+  COMMDevInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: comm-dev-internet-gateway }]
+
+  COMMDevIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      InternetGatewayId: !Ref COMMDevInternetGateway
+
+  COMMDevSnAppdataA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.208.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1a }]
+
+  COMMDevSnAppdataB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.209.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1b }]
+
+  COMMDevSnAppdataC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.210.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1c }]
+
+  COMMDevSnOfficeA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.211.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1a }]
+
+  COMMDevSnOfficeB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.212.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1b }]
+
+  COMMDevSnOfficeC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.213.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1c }]
+
+  COMMDevSnInternetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.214.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1a }]
+
+  COMMDevSnInternetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.215.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1b }]
+
+  COMMDevSnInternetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      CidrBlock: 10.3.216.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1c }]
+
+  COMMDevRtbCommon:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcCOMMDevEuw1
+      Tags: [{ Key: Name, Value: rtb-comm-dev-common-euw1 }]
+
+  COMMDevRtbAssocAppdataA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnAppdataA
+
+  COMMDevRtbAssocAppdataB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnAppdataB
+
+  COMMDevRtbAssocAppdataC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnAppdataC
+
+  COMMDevRtbAssocOfficeA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnOfficeA
+
+  COMMDevRtbAssocOfficeB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnOfficeB
+
+  COMMDevRtbAssocOfficeC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnOfficeC
+
+  COMMDevRtbAssocInternetA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnInternetA
+
+  COMMDevRtbAssocInternetB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnInternetB
+
+  COMMDevRtbAssocInternetC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      SubnetId: !Ref COMMDevSnInternetC
+
+  COMMDevRtbRouteTo10396020:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref COMMDevRtbCommon
+      DestinationCidrBlock: 10.3.96.0/20
+      GatewayId: !Ref COMMDevInternetGateway
+
+  COMMDevReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref COMMDevReadRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref COMMDevReadRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  COMMDevWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref COMMDevWriteRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref COMMDevWriteRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  # -------------------------
+  # FIN DEV
+  # -------------------------
+  VpcFINDevEuw1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.224.0/20
+      Tags: [{ Key: Name, Value: vpc-FIN-dev-euw1-01 }]
+
+  FINDevInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: fin-dev-internet-gateway }]
+
+  FINDevIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      InternetGatewayId: !Ref FINDevInternetGateway
+
+  FINDevSnAppdataA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.224.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1a }]
+
+  FINDevSnAppdataB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.225.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1b }]
+
+  FINDevSnAppdataC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.226.0/24
+      Tags: [{ Key: Name, Value: sn-appdata-euw1c }]
+
+  FINDevSnOfficeA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.227.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1a }]
+
+  FINDevSnOfficeB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.228.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1b }]
+
+  FINDevSnOfficeC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.229.0/24
+      Tags: [{ Key: Name, Value: sn-officepresentation-euw1c }]
+
+  FINDevSnInternetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.230.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1a }]
+
+  FINDevSnInternetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.231.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1b }]
+
+  FINDevSnInternetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      CidrBlock: 10.3.232.0/24
+      Tags: [{ Key: Name, Value: sn-internetpresentation-euw1c }]
+
+  FINDevRtbCommon:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcFINDevEuw1
+      Tags: [{ Key: Name, Value: rtb-fin-dev-common-euw1 }]
+
+  FINDevRtbAssocAppdataA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnAppdataA
+
+  FINDevRtbAssocAppdataB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnAppdataB
+
+  FINDevRtbAssocAppdataC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnAppdataC
+
+  FINDevRtbAssocOfficeA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnOfficeA
+
+  FINDevRtbAssocOfficeB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnOfficeB
+
+  FINDevRtbAssocOfficeC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnOfficeC
+
+  FINDevRtbAssocInternetA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnInternetA
+
+  FINDevRtbAssocInternetB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnInternetB
+
+  FINDevRtbAssocInternetC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      SubnetId: !Ref FINDevSnInternetC
+
+  FINDevRtbRouteTo103112020:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref FINDevRtbCommon
+      DestinationCidrBlock: 10.3.112.0/20
+      GatewayId: !Ref FINDevInternetGateway
+
+  FINDevReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref FINDevReadRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref FINDevReadRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+  FINDevWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref FINDevWriteRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref FINDevWriteRoleTrustedAccounts
+            Action: [ sts:AssumeRole ]
+
+
+Outputs:
+  # TU DEV outputs
+  VpcTUDevId:
+    Value: !Ref VpcTUDevEuw1
+  RtbTUDevId:
+    Value: !Ref TUDevRtbCommon
+  TUDevReadRoleArn:
+    Description: ARN of TU dev read role
+    Value: !GetAtt TUDevReadRole.Arn
+  TUDevWriteRoleArn:
+    Description: ARN of TU dev write role
+    Value: !GetAtt TUDevWriteRole.Arn
+
+  # INT DEV outputs
+  VpcINTDevId:
+    Value: !Ref VpcINTDevEuw1
+  RtbINTDevId:
+    Value: !Ref INTDevRtbCommon
+  INTDevReadRoleArn:
+    Value: !GetAtt INTDevReadRole.Arn
+  INTDevWriteRoleArn:
+    Value: !GetAtt INTDevWriteRole.Arn
+
+  # CUST DEV outputs
+  VpcCUSTDevId:
+    Value: !Ref VpcCUSTDevEuw1
+  RtbCUSTDevId:
+    Value: !Ref CUSTDevRtbCommon
+  CUSTDevReadRoleArn:
+    Value: !GetAtt CUSTDevReadRole.Arn
+  CUSTDevWriteRoleArn:
+    Value: !GetAtt CUSTDevWriteRole.Arn
+
+  # SEC DEV outputs
+  VpcSECDevId:
+    Value: !Ref VpcSECDevEuw1
+  RtbSECDevId:
+    Value: !Ref SECDevRtbCommon
+  SECDevReadRoleArn:
+    Value: !GetAtt SECDevReadRole.Arn
+  SECDevWriteRoleArn:
+    Value: !GetAtt SECDevWriteRole.Arn
+
+  # COLL DEV outputs
+  VpcCOLLDevId:
+    Value: !Ref VpcCOLLDevEuw1
+  RtbCOLLDevId:
+    Value: !Ref COLLDevRtbCommon
+  COLLDevReadRoleArn:
+    Value: !GetAtt COLLDevReadRole.Arn
+  COLLDevWriteRoleArn:
+    Value: !GetAtt COLLDevWriteRole.Arn
+
+  # COMM DEV outputs
+  VpcCOMMDevId:
+    Value: !Ref VpcCOMMDevEuw1
+  RtbCOMMDevId:
+    Value: !Ref COMMDevRtbCommon
+  COMMDevReadRoleArn:
+    Value: !GetAtt COMMDevReadRole.Arn
+  COMMDevWriteRoleArn:
+    Value: !GetAtt COMMDevWriteRole.Arn
+
+  # FIN DEV outputs
+  VpcFINDevId:
+    Value: !Ref VpcFINDevEuw1
+  RtbFINDevId:
+    Value: !Ref FINDevRtbCommon
+  FINDevReadRoleArn:
+    Value: !GetAtt FINDevReadRole.Arn
+  FINDevWriteRoleArn:
+    Value: !GetAtt FINDevWriteRole.Arn

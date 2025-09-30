@@ -1,0 +1,355 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AWS CloudFormation template to provision a VPC, subnets, route tables, and security groups for the FIN production environment in eu-west-1.
+
+Parameters:
+  VpcCidr:
+    Type: String
+    Default: 10.0.224.0/20
+    Description: CIDR block for the VPC
+  AppDataSubnetACidr:
+    Type: String
+    Default: 10.0.224.0/24
+    Description: CIDR block for appdata subnet A
+  AppDataSubnetBCidr:
+    Type: String
+    Default: 10.0.225.0/24
+    Description: CIDR block for appdata subnet B
+  AppDataSubnetCCidr:
+    Type: String
+    Default: 10.0.226.0/24
+    Description: CIDR block for appdata subnet C
+  OfficePresentationSubnetACidr:
+    Type: String
+    Default: 10.0.227.0/24
+    Description: CIDR block for office presentation subnet A
+  OfficePresentationSubnetBCidr:
+    Type: String
+    Default: 10.0.228.0/24
+    Description: CIDR block for office presentation subnet B
+  OfficePresentationSubnetCCidr:
+    Type: String
+    Default: 10.0.229.0/24
+    Description: CIDR block for office presentation subnet C
+  InternetPresentationSubnetACidr:
+    Type: String
+    Default: 10.0.230.0/24
+    Description: CIDR block for internet presentation subnet A
+  InternetPresentationSubnetBCidr:
+    Type: String
+    Default: 10.0.231.0/24
+    Description: CIDR block for internet presentation subnet B
+  InternetPresentationSubnetCCidr:
+    Type: String
+    Default: 10.0.232.0/24
+    Description: CIDR block for internet presentation subnet C
+
+  # IAM Role Parameters
+  FINPrdReadRoleName:
+    Type: String
+    Default: FIN-prd-read-role
+    Description: Name of the IAM role for read-only access in FIN production
+  FINPrdWriteRoleName:
+    Type: String
+    Default: FIN-prd-write-role
+    Description: Name of the IAM role for write access in FIN production
+  FINPrdReadRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::481665121350:root"
+    Description: List of AWS account ARNs allowed to assume the read-only role
+  FINPrdWriteRoleTrustedAccounts:
+    Type: CommaDelimitedList
+    Default: "arn:aws:iam::481665121350:root"
+    Description: List of AWS account ARNs allowed to assume the write role
+
+Resources:
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      InternetGatewayId: !Ref InternetGateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: fin-prd-internet-gateway
+
+  vpcFINprdEuw101:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.224.0/20
+      Tags:
+        - Key: Name
+          Value: vpc-FIN-prd-euw1-01
+
+  snAppdataEuw1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.224.0/24
+      Tags:
+        - Key: Name
+          Value: sn-appdata-euw1a
+
+  snAppdataEuw1b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.225.0/24
+      Tags:
+        - Key: Name
+          Value: sn-appdata-euw1b
+
+  snAppdataEuw1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.226.0/24
+      Tags:
+        - Key: Name
+          Value: sn-appdata-euw1c
+
+  snOfficepresentationEuw1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.227.0/24
+      Tags:
+        - Key: Name
+          Value: sn-officepresentation-euw1a
+
+  snOfficepresentationEuw1b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.228.0/24
+      Tags:
+        - Key: Name
+          Value: sn-officepresentation-euw1b
+
+  snOfficepresentationEuw1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.229.0/24
+      Tags:
+        - Key: Name
+          Value: sn-officepresentation-euw1c
+
+  snInternetpresentationEuw1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.230.0/24
+      Tags:
+        - Key: Name
+          Value: sn-internetpresentation-euw1a
+
+  snInternetpresentationEuw1b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.231.0/24
+      Tags:
+        - Key: Name
+          Value: sn-internetpresentation-euw1b
+
+  snInternetpresentationEuw1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      CidrBlock: 10.0.232.0/24
+      Tags:
+        - Key: Name
+          Value: sn-internetpresentation-euw1c
+
+  rtbFinPrdCommonEuw1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: rtb-fin-prd-common-euw1
+
+  rtbFinPrdCommonEuw1AssocAppdataEuw1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snAppdataEuw1a
+
+  rtbFinPrdCommonEuw1AssocAppdataEuw1b:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snAppdataEuw1b
+
+  rtbFinPrdCommonEuw1AssocAppdataEuw1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snAppdataEuw1c
+
+  rtbFinPrdCommonEuw1AssocOfficepresentationEuw1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snOfficepresentationEuw1a
+
+  rtbFinPrdCommonEuw1AssocOfficepresentationEuw1b:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snOfficepresentationEuw1b
+
+  rtbFinPrdCommonEuw1AssocOfficepresentationEuw1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snOfficepresentationEuw1c
+
+  rtbFinPrdCommonEuw1AssocInternetpresentationEuw1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snInternetpresentationEuw1a
+
+  rtbFinPrdCommonEuw1AssocInternetpresentationEuw1b:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snInternetpresentationEuw1b
+
+  rtbFinPrdCommonEuw1AssocInternetpresentationEuw1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      SubnetId: !Ref snInternetpresentationEuw1c
+
+  rtbFinPrdCommonEuw1Route10112020:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref rtbFinPrdCommonEuw1
+      DestinationCidrBlock: 10.0.112.0/20
+      GatewayId: !Ref InternetGateway
+
+  # baseline security groups
+  sgAzureArc:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Azure Arc outbound
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-azure-arc
+
+  sgAzureMonitor:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Azure Monitor outbound
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-azure-monitor
+
+  sgMicrosoftDefender:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Microsoft Defender outbound
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-microsoft-defender
+
+  sgDatadog:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Data Dog outbound
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-datadog
+
+  sgQualys:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Qualys SaaS service
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-qualys
+
+  sgSentinelSyslog:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Sentinel syslog
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-sentinel-syslog
+
+  sgProdDomainControllers:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Prod Domain Controllers (bidirectional)
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-prod-domain-controllers
+
+  sgProdCertAuthority:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Prod Cert Authority (bidirectional)
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-prod-cert-authority
+
+  sgHttps:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: HTTPS inbound/outbound
+      VpcId: !Ref vpcFINprdEuw101
+      Tags:
+        - Key: Name
+          Value: sg-https
+
+  # PRD IAM Roles
+  FINPrdReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref FINPrdReadRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref FINPrdReadRoleTrustedAccounts
+            Action:
+              - sts:AssumeRole
+
+  FINPrdWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref FINPrdWriteRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref FINPrdWriteRoleTrustedAccounts
+            Action:
+              - sts:AssumeRole
+
+Outputs:
+  VpcId:
+    Value: !Ref vpcFINprdEuw101
+  RouteTableId:
+    Value: !Ref rtbFinPrdCommonEuw1
+  FINPrdReadRoleArn:
+    Description: ARN of the FIN production read-only IAM role
+    Value: !GetAtt FINPrdReadRole.Arn
+  FINPrdWriteRoleArn:
+    Description: ARN of the FIN production write IAM role
+    Value: !GetAtt FINPrdWriteRole.Arn
