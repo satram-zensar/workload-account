@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 name: OIDC assume test
+=======
+﻿name: OIDC assume test
+>>>>>>> 5e88ad9 (Add OIDC assume test workflow)
 on:
   workflow_dispatch:
 
